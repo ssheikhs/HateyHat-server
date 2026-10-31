@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { getDb } from "./config/db.js";
 import eventsRouter from "./routes/events.js";
+import joinsRouter from "./routes/joins.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,6 +34,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
+app.use("/", joinsRouter);
 app.use("/events", eventsRouter);
 
 app.use((req, res) => {
