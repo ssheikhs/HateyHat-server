@@ -33,6 +33,8 @@ export function validateEvent(body = {}, { partial = false } = {}) {
     const title = String(body.title ?? "").trim();
     if (title.length < 5 || title.length > 100) {
       errors.title = "Title must be between 5 and 100 characters";
+    } else if (!/\p{L}{3,}/u.test(title)) {
+      errors.title = "Title must include words, not just numbers or symbols";
     } else data.title = title;
   }
 
@@ -69,6 +71,8 @@ export function validateEvent(body = {}, { partial = false } = {}) {
       errors.eventDate = "Please provide a valid event date";
     } else if (date.getTime() <= Date.now()) {
       errors.eventDate = "Event date must be in the future";
+    } else if (date.getTime() > Date.now() + 2 * 365 * 24 * 60 * 60 * 1000) {
+      errors.eventDate = "Event date must be within the next two years";
     } else data.eventDate = date;
   }
 
