@@ -12,6 +12,7 @@ Built with **Express 5**, **MongoDB** and **JWT** verification against the Bette
 - Join and leave events, with duplicate-join and organizer-join protection (unique index on `eventId + userEmail`)
 - Joined events list sorted by event date, organizer-only participant list and public community stats
 - Server-side validation for every event field, including a future-only event date
+- Image uploads stored in MongoDB, so event thumbnails and profile photos can come straight from the user's computer
 
 ## API
 
@@ -31,6 +32,8 @@ Built with **Express 5**, **MongoDB** and **JWT** verification against the Bette
 | GET | `/events/:id/participants` | JWT (owner) | Participant list |
 | GET | `/joined-events` | JWT | My joined events, sorted by date |
 | GET | `/stats` | – | Community impact numbers |
+| POST | `/images` | – | Upload an image file (raw body, max 3 MB) |
+| GET | `/images/:id` | – | Serve an uploaded image |
 
 ## How authentication works
 

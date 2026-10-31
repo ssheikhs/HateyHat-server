@@ -43,5 +43,6 @@ export async function collections() {
   return {
     events: db.collection("events"),
     joins: db.collection("joins"),
+    images: db.collection("images"),
   };
 }
