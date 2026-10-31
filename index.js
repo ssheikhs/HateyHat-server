@@ -4,6 +4,7 @@ import cors from "cors";
 import { getDb } from "./config/db.js";
 import eventsRouter from "./routes/events.js";
 import joinsRouter from "./routes/joins.js";
+import statsRouter from "./routes/stats.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -36,6 +37,7 @@ app.get("/health", async (req, res) => {
 
 app.use("/", joinsRouter);
 app.use("/events", eventsRouter);
+app.use("/stats", statsRouter);
 
 app.use((req, res) => {
   res.status(404).send({ message: "Route not found" });

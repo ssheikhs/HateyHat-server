@@ -63,6 +63,55 @@ router.post("/events/:id/join", verifyToken, async (req, res, next) => {
   }
 });
 
+// Leave (cancel participation in) an event
+router.delete("/events/:id/join", verifyToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: "Invalid event id" });
+    }
+    const { events, joins } = await collections();
+    const _id = new ObjectId(id);
+    const result = await joins.deleteOne({ eventId: _id, userEmail: req.user.email });
+    if (result.deletedCount === 0) {
+      return res.status(404).send({ message: "You have not joined this event" });
+    }
+    await events.updateOne(
+      { _id, participantsCount: { $gt: 0 } },
+      { $inc: { participantsCount: -1 } }
+    );
+    res.send({ left: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Participants of an event - visible to the organizer only
+router.get("/events/:id/participants", verifyToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: "Invalid event id" });
+    }
+    const { events, joins } = await collections();
+    const _id = new ObjectId(id);
+    const event = await events.findOne({ _id }, { projection: { creatorEmail: 1 } });
+    if (!event) {
+      return res.status(404).send({ message: "Event not found" });
+    }
+    if (event.creatorEmail !== req.user.email) {
+      return res.status(403).send({ message: "Only the organizer can see participants" });
+    }
+    const result = await joins
+      .find({ eventId: _id }, { projection: { userName: 1, userEmail: 1, userImage: 1, joinedAt: 1 } })
+      .sort({ joinedAt: 1 })
+      .toArray();
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Has the logged-in user joined this event?
 router.get("/events/:id/join-status", verifyToken, async (req, res, next) => {
   try {
