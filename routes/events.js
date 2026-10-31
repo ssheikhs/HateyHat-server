@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../config/db.js";
-import { EVENT_TYPES } from "../utils/validateEvent.js";
+import { EVENT_TYPES, validateEvent } from "../utils/validateEvent.js";
+import { verifyToken } from "../middleware/verifyToken.js";
 
 const router = Router();
 
@@ -44,6 +45,32 @@ router.get("/", async (req, res, next) => {
 
     const result = await events.find(query).sort({ eventDate: 1 }).toArray();
     res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create a new event (logged-in users only)
+router.post("/", verifyToken, async (req, res, next) => {
+  try {
+    const { errors, data, isValid } = validateEvent(req.body);
+    if (!isValid) {
+      return res.status(400).send({ message: "Validation failed", errors });
+    }
+
+    const { events } = await collections();
+    const now = new Date();
+    const doc = {
+      ...data,
+      creatorEmail: req.user.email,
+      creatorName: req.user.name || "",
+      creatorImage: req.user.image || "",
+      participantsCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const result = await events.insertOne(doc);
+    res.status(201).send({ ...doc, _id: result.insertedId });
   } catch (error) {
     next(error);
   }
