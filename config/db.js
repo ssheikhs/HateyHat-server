@@ -14,12 +14,12 @@ const client = new MongoClient(uri, {
 });
 
 // Reuse one connection across serverless invocations on Vercel
-let dbPromise = globalThis.__kindhandsDb;
+let dbPromise = globalThis.__hateyhatDb;
 
 export async function getDb() {
   if (!dbPromise) {
     dbPromise = client.connect().then(async (c) => {
-      const db = c.db(process.env.DB_NAME || "kindhands");
+      const db = c.db(process.env.DB_NAME || "hateyhat");
       await Promise.all([
         db.collection("events").createIndex({ eventDate: 1 }),
         db.collection("events").createIndex({ creatorEmail: 1 }),
@@ -29,10 +29,10 @@ export async function getDb() {
       ]);
       return db;
     });
-    globalThis.__kindhandsDb = dbPromise;
+    globalThis.__hateyhatDb = dbPromise;
     dbPromise.catch(() => {
       dbPromise = null;
-      globalThis.__kindhandsDb = null;
+      globalThis.__hateyhatDb = null;
     });
   }
   return dbPromise;

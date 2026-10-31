@@ -1,6 +1,6 @@
-# KindHands — Server
+# HateyHat — Server
 
-REST API for **KindHands**, a community platform where people create, join and track social development events (cleanups, plantations, donation drives and more).
+REST API for **HateyHat** (হাতে হাত — "hand in hand"), a community platform where people create, join and track social development events (cleanups, plantations, donation drives and more).
 
 Built with **Express 5**, **MongoDB** and **JWT** verification against the BetterAuth JWKS published by the Next.js client.
 
@@ -49,6 +49,6 @@ npm run dev
 | Name | Example |
 | --- | --- |
 | `MONGODB_URI` | MongoDB Atlas connection string |
-| `DB_NAME` | `kindhands` |
+| `DB_NAME` | `hateyhat` |
 | `CLIENT_URL` | `http://localhost:3000` (live: your client Vercel URL) |
 | `PORT` | `5000` |

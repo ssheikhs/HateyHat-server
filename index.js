@@ -22,7 +22,7 @@ app.use(
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send({ message: "KindHands server is running" });
+  res.send({ message: "HateyHat server is running" });
 });
 
 app.get("/health", async (req, res) => {
@@ -51,7 +51,7 @@ app.use((err, req, res, next) => {
 
 if (!process.env.VERCEL) {
   app.listen(port, () => {
-    console.log(`KindHands server listening on port ${port}`);
+    console.log(`HateyHat server listening on port ${port}`);
   });
 }
 
