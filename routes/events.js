@@ -50,6 +50,20 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// Events created by the logged-in user (Manage Events page)
+router.get("/mine", verifyToken, async (req, res, next) => {
+  try {
+    const { events } = await collections();
+    const result = await events
+      .find({ creatorEmail: req.user.email })
+      .sort({ eventDate: 1 })
+      .toArray();
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Create a new event (logged-in users only)
 router.post("/", verifyToken, async (req, res, next) => {
   try {
@@ -89,6 +103,76 @@ router.get("/:id", async (req, res, next) => {
       return res.status(404).send({ message: "Event not found" });
     }
     res.send(event);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update an event - only the creator may do this
+router.patch("/:id", verifyToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: "Invalid event id" });
+    }
+
+    const { errors, data, isValid } = validateEvent(req.body, { partial: true });
+    if (!isValid) {
+      return res.status(400).send({ message: "Validation failed", errors });
+    }
+    if (Object.keys(data).length === 0) {
+      return res.status(400).send({ message: "Nothing to update" });
+    }
+
+    const { events, joins } = await collections();
+    const _id = new ObjectId(id);
+    const event = await events.findOne({ _id });
+    if (!event) {
+      return res.status(404).send({ message: "Event not found" });
+    }
+    if (event.creatorEmail !== req.user.email) {
+      return res.status(403).send({ message: "You can only update your own events" });
+    }
+
+    data.updatedAt = new Date();
+    await events.updateOne({ _id }, { $set: data });
+
+    // Keep the event snapshot inside join records in sync
+    const snapshot = {};
+    for (const key of ["title", "thumbnail", "location", "eventType", "eventDate"]) {
+      if (data[key] !== undefined) snapshot[`event.${key}`] = data[key];
+    }
+    if (Object.keys(snapshot).length) {
+      await joins.updateMany({ eventId: _id }, { $set: snapshot });
+    }
+
+    const updated = await events.findOne({ _id });
+    res.send(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete an event - only the creator may do this
+router.delete("/:id", verifyToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: "Invalid event id" });
+    }
+    const { events, joins } = await collections();
+    const _id = new ObjectId(id);
+    const event = await events.findOne({ _id });
+    if (!event) {
+      return res.status(404).send({ message: "Event not found" });
+    }
+    if (event.creatorEmail !== req.user.email) {
+      return res.status(403).send({ message: "You can only delete your own events" });
+    }
+
+    await events.deleteOne({ _id });
+    const removedJoins = await joins.deleteMany({ eventId: _id });
+    res.send({ deleted: true, removedJoins: removedJoins.deletedCount });
   } catch (error) {
     next(error);
   }
