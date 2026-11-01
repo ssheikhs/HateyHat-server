@@ -1,6 +1,6 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
+const uri = (process.env.MONGODB_URI || "").trim();
 if (!uri) {
   throw new Error("MONGODB_URI is not set. Add it to your .env file.");
 }
@@ -19,7 +19,7 @@ let dbPromise = globalThis.__hateyhatDb;
 export async function getDb() {
   if (!dbPromise) {
     dbPromise = client.connect().then(async (c) => {
-      const db = c.db(process.env.DB_NAME || "hateyhat");
+      const db = c.db((process.env.DB_NAME || "").trim() || "hateyhat");
       await Promise.all([
         db.collection("events").createIndex({ eventDate: 1 }),
         db.collection("events").createIndex({ creatorEmail: 1 }),
