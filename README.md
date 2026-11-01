@@ -2,6 +2,8 @@
 
 REST API for **HateyHat** (হাতে হাত — "hand in hand"), a community platform where people create, join and track social development events (cleanups, plantations, donation drives and more).
 
+🔗 **Client repo:** https://github.com/ssheikhs/HateyHat
+
 Built with **Express 5**, **MongoDB** and **JWT** verification against the BetterAuth JWKS published by the Next.js client.
 
 ## Features
