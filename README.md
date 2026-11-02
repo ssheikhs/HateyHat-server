@@ -6,15 +6,15 @@
 
 Built with **Express 5** and **MongoDB**. Private routes are protected with **JWTs** signed by BetterAuth.
 
-🔗 **Live API:** [hateyhat-server-dun.vercel.app](https://hateyhat-server-dun.vercel.app)  
-🌐 **Website:** [hateyhat.vercel.app](https://hateyhat.vercel.app)  
-📦 **Client repo:** [github.com/ssheikhs/HateyHat](https://github.com/ssheikhs/HateyHat)
+**Live API:** [hateyhat-server-dun.vercel.app](https://hateyhat-server-dun.vercel.app)  
+**Website:** [hateyhat.vercel.app](https://hateyhat.vercel.app)  
+**Client repo:** [github.com/ssheikhs/HateyHat](https://github.com/ssheikhs/HateyHat)
 
 </div>
 
 ---
 
-## ✨ What this server does
+## What this server does
 
 - **Stores and serves events.** Anyone can read upcoming events; only logged-in users can create them.
 - **Shows only future events** on the public list, and the **6 nearest** for the home page using MongoDB's `.limit()`.
@@ -27,7 +27,7 @@ Built with **Express 5** and **MongoDB**. Private routes are protected with **JW
 
 ---
 
-## 🔐 How authentication works
+## How authentication works
 
 The website uses **BetterAuth** for login. When the website needs private data it gets a short-lived **JWT** from BetterAuth and sends it to this server:
 
@@ -45,7 +45,7 @@ If anything is wrong, the server answers **`401 Unauthorized`**. Because the ser
 
 ---
 
-## 📡 API endpoints
+## API endpoints
 
 **Public**
 
@@ -61,7 +61,7 @@ If anything is wrong, the server answers **`401 Unauthorized`**. Because the ser
 | GET | `/images/:id` | An uploaded image |
 | POST | `/images` | Upload an image (raw file body, JPG/PNG/WebP/GIF, max 3 MB) |
 
-**Need a JWT** 🔒
+**Need a JWT**
 
 | Method | Route | What it does |
 | --- | --- | --- |
@@ -96,7 +96,7 @@ A past date returns `400` with `{ "errors": { "eventDate": "Event date must be i
 
 ---
 
-## 🗄️ Database collections
+## Database collections
 
 | Collection | What's inside |
 | --- | --- |
@@ -107,7 +107,7 @@ A past date returns `400` with `{ "errors": { "eventDate": "Event date must be i
 
 ---
 
-## 📁 Folder structure
+## Folder structure
 
 ```
 index.js                # Express app: CORS, JSON, routes, error handler
@@ -128,7 +128,7 @@ vercel.json             # Vercel deployment settings
 
 ---
 
-## 🚀 Run it on your computer
+## Run it on your computer
 
 **You need:** Node.js 20+ and a MongoDB database (MongoDB Atlas free tier works).
 
@@ -153,7 +153,7 @@ Check **http://localhost:5000/health** — it should say `{"ok":true,"database":
 
 ---
 
-## ☁️ Deploying to Vercel
+## Deploying to Vercel
 
 1. Import this repo on Vercel (preset **Express**) and add `MONGODB_URI`, `DB_NAME` and `CLIENT_URL`.
 2. Set `CLIENT_URL` to the website's live URL, with no trailing `/`.
