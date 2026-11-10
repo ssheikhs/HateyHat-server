@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 dotenv.config();
 
@@ -27,6 +28,29 @@ const eventsCollection = db.collection("events");
 const joinsCollection = db.collection("joins");
 
 const eventTypes = ["Cleanup", "Plantation", "Donation", "Food Drive", "Blood Donation", "Education", "Healthcare", "Relief"];
+
+// ---------- verify JWT (token comes from BetterAuth) ----------
+// BetterAuth shares its public keys at /api/auth/jwks
+const JWKS = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: clientUrl,
+      audience: clientUrl,
+    });
+    req.user = payload; // payload has email, name, image
+    next();
+  } catch (error) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("HateyHat server is running");
@@ -61,6 +85,13 @@ app.get("/events", async (req, res) => {
     query.eventType = type;
   }
 
+  const result = await eventsCollection.find(query).sort({ eventDate: 1 }).toArray();
+  res.send(result);
+});
+
+// events created by the logged in user
+app.get("/events/mine", verifyToken, async (req, res) => {
+  const query = { creatorEmail: req.user.email };
   const result = await eventsCollection.find(query).sort({ eventDate: 1 }).toArray();
   res.send(result);
 });
