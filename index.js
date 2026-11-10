@@ -52,6 +52,17 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+// ---------- check event form data ----------
+const checkEvent = (event, checkDate = true) => {
+  if (!event.title || event.title.length < 5) return "Title must be at least 5 characters";
+  if (!event.description || event.description.length < 20) return "Description must be at least 20 characters";
+  if (!eventTypes.includes(event.eventType)) return "Please choose a valid event type";
+  if (!event.thumbnail || !event.thumbnail.startsWith("http")) return "Thumbnail must be a valid image URL";
+  if (!event.location || event.location.length < 3) return "Location is required";
+  if (checkDate && (!event.eventDate || new Date(event.eventDate) <= new Date())) return "Event date must be in the future";
+  return null;
+};
+
 app.get("/", (req, res) => {
   res.send("HateyHat server is running");
 });
@@ -93,6 +104,33 @@ app.get("/events", async (req, res) => {
 app.get("/events/mine", verifyToken, async (req, res) => {
   const query = { creatorEmail: req.user.email };
   const result = await eventsCollection.find(query).sort({ eventDate: 1 }).toArray();
+  res.send(result);
+});
+
+// create event
+app.post("/events", verifyToken, async (req, res) => {
+  const event = req.body;
+
+  const error = checkEvent(event);
+  if (error) {
+    return res.status(400).send({ message: error });
+  }
+
+  const newEvent = {
+    title: event.title,
+    description: event.description,
+    eventType: event.eventType,
+    thumbnail: event.thumbnail,
+    location: event.location,
+    eventDate: new Date(event.eventDate),
+    creatorEmail: req.user.email,
+    creatorName: req.user.name,
+    creatorImage: req.user.image,
+    participantsCount: 0,
+    createdAt: new Date(),
+  };
+
+  const result = await eventsCollection.insertOne(newEvent);
   res.send(result);
 });
 
