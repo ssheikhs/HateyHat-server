@@ -184,6 +184,20 @@ app.patch("/events/:id", verifyToken, async (req, res) => {
   };
   const result = await eventsCollection.updateOne(filter, updateDoc);
 
+  // also update the event info saved inside joins
+  await joinsCollection.updateMany(
+    { eventId: new ObjectId(id) },
+    {
+      $set: {
+        "event.title": updated.title,
+        "event.thumbnail": updated.thumbnail,
+        "event.location": updated.location,
+        "event.eventType": updated.eventType,
+        "event.eventDate": new Date(updated.eventDate),
+      },
+    }
+  );
+
   res.send(result);
 });
 
@@ -201,7 +215,58 @@ app.delete("/events/:id", verifyToken, async (req, res) => {
   }
 
   const result = await eventsCollection.deleteOne(filter);
+  await joinsCollection.deleteMany({ eventId: new ObjectId(id) });
   res.send(result);
+});
+
+// ================= JOIN EVENTS =================
+
+// join an event
+app.post("/events/:id/join", verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const email = req.user.email;
+
+  const event = await eventsCollection.findOne({ _id: new ObjectId(id) });
+  if (!event) {
+    return res.status(404).send({ message: "Event not found" });
+  }
+  if (new Date(event.eventDate) < new Date()) {
+    return res.status(400).send({ message: "This event is already over" });
+  }
+  if (event.creatorEmail === email) {
+    return res.status(400).send({ message: "You are the organizer of this event" });
+  }
+
+  // a user can join one event only once
+  const alreadyJoined = await joinsCollection.findOne({ eventId: new ObjectId(id), userEmail: email });
+  if (alreadyJoined) {
+    return res.status(409).send({ message: "You have already joined this event" });
+  }
+
+  const join = {
+    eventId: new ObjectId(id),
+    userEmail: email,
+    userName: req.user.name,
+    userImage: req.user.image,
+    event: {
+      title: event.title,
+      thumbnail: event.thumbnail,
+      location: event.location,
+      eventType: event.eventType,
+      eventDate: event.eventDate,
+    },
+    joinedAt: new Date(),
+  };
+
+  const result = await joinsCollection.insertOne(join);
+  await eventsCollection.updateOne({ _id: new ObjectId(id) }, { $inc: { participantsCount: 1 } });
+  res.send(result);
+});
+
+// did the user join this event?
+app.get("/events/:id/join-status", verifyToken, async (req, res) => {
+  const join = await joinsCollection.findOne({ eventId: new ObjectId(req.params.id), userEmail: req.user.email });
+  res.send({ joined: !!join });
 });
 
 app.listen(port, () => {
