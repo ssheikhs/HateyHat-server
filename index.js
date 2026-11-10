@@ -148,6 +148,62 @@ app.get("/events/:id", async (req, res) => {
   res.send(event);
 });
 
+// update event (only the creator)
+app.patch("/events/:id", verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+
+  const event = await eventsCollection.findOne(filter);
+  if (!event) {
+    return res.status(404).send({ message: "Event not found" });
+  }
+  if (event.creatorEmail !== req.user.email) {
+    return res.status(403).send({ message: "forbidden access" });
+  }
+
+  const updated = req.body;
+  // the date is only sent when the user changed it
+  const dateChanged = !!updated.eventDate;
+  if (!dateChanged) {
+    updated.eventDate = event.eventDate;
+  }
+  const error = checkEvent(updated, dateChanged);
+  if (error) {
+    return res.status(400).send({ message: error });
+  }
+
+  const updateDoc = {
+    $set: {
+      title: updated.title,
+      description: updated.description,
+      eventType: updated.eventType,
+      thumbnail: updated.thumbnail,
+      location: updated.location,
+      eventDate: new Date(updated.eventDate),
+    },
+  };
+  const result = await eventsCollection.updateOne(filter, updateDoc);
+
+  res.send(result);
+});
+
+// delete event (only the creator)
+app.delete("/events/:id", verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+
+  const event = await eventsCollection.findOne(filter);
+  if (!event) {
+    return res.status(404).send({ message: "Event not found" });
+  }
+  if (event.creatorEmail !== req.user.email) {
+    return res.status(403).send({ message: "forbidden access" });
+  }
+
+  const result = await eventsCollection.deleteOne(filter);
+  res.send(result);
+});
+
 app.listen(port, () => {
   console.log(`HateyHat server is running on port ${port}`);
 });
