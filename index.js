@@ -26,6 +26,7 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 const db = client.db(process.env.DB_NAME || "hateyhat");
 const eventsCollection = db.collection("events");
 const joinsCollection = db.collection("joins");
+const imagesCollection = db.collection("images");
 
 const eventTypes = ["Cleanup", "Plantation", "Donation", "Food Drive", "Blood Donation", "Education", "Healthcare", "Relief"];
 
@@ -308,6 +309,29 @@ app.get("/stats", async (req, res) => {
   const organizers = await eventsCollection.aggregate([{ $group: { _id: "$creatorEmail" } }]).toArray();
 
   res.send({ totalEvents, upcomingEvents, totalVolunteers, organizers: organizers.length });
+});
+
+// ================= IMAGE UPLOAD =================
+
+// save an image file sent from the browser
+app.post("/images", express.raw({ type: "*/*", limit: "3mb" }), async (req, res) => {
+  const image = {
+    data: req.body,
+    contentType: req.headers["content-type"],
+    createdAt: new Date(),
+  };
+  const result = await imagesCollection.insertOne(image);
+  res.send({ id: result.insertedId });
+});
+
+// show an image
+app.get("/images/:id", async (req, res) => {
+  const image = await imagesCollection.findOne({ _id: new ObjectId(req.params.id) });
+  if (!image) {
+    return res.status(404).send({ message: "Image not found" });
+  }
+  res.set("Content-Type", image.contentType);
+  res.send(Buffer.from(image.data.buffer));
 });
 
 app.listen(port, () => {
