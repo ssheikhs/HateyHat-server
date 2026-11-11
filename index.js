@@ -299,6 +299,17 @@ app.get("/joined-events", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// ================= STATS (home page) =================
+app.get("/stats", async (req, res) => {
+  const totalEvents = await eventsCollection.countDocuments();
+  const upcomingEvents = await eventsCollection.countDocuments({ eventDate: { $gte: new Date() } });
+  const totalVolunteers = await joinsCollection.countDocuments();
+  // group events by creator email to count organizers
+  const organizers = await eventsCollection.aggregate([{ $group: { _id: "$creatorEmail" } }]).toArray();
+
+  res.send({ totalEvents, upcomingEvents, totalVolunteers, organizers: organizers.length });
+});
+
 app.listen(port, () => {
   console.log(`HateyHat server is running on port ${port}`);
 });
