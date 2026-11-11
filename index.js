@@ -263,10 +263,40 @@ app.post("/events/:id/join", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// leave an event
+app.delete("/events/:id/join", verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const result = await joinsCollection.deleteOne({ eventId: new ObjectId(id), userEmail: req.user.email });
+
+  if (result.deletedCount > 0) {
+    await eventsCollection.updateOne({ _id: new ObjectId(id) }, { $inc: { participantsCount: -1 } });
+  }
+  res.send(result);
+});
+
 // did the user join this event?
 app.get("/events/:id/join-status", verifyToken, async (req, res) => {
   const join = await joinsCollection.findOne({ eventId: new ObjectId(req.params.id), userEmail: req.user.email });
   res.send({ joined: !!join });
+});
+
+// people who joined an event (only the creator can see)
+app.get("/events/:id/participants", verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const event = await eventsCollection.findOne({ _id: new ObjectId(id) });
+  if (!event || event.creatorEmail !== req.user.email) {
+    return res.status(403).send({ message: "forbidden access" });
+  }
+
+  const result = await joinsCollection.find({ eventId: new ObjectId(id) }).toArray();
+  res.send(result);
+});
+
+// all events the user joined, sorted by event date
+app.get("/joined-events", verifyToken, async (req, res) => {
+  const query = { userEmail: req.user.email };
+  const result = await joinsCollection.find(query).sort({ "event.eventDate": 1 }).toArray();
+  res.send(result);
 });
 
 app.listen(port, () => {
