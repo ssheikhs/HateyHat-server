@@ -334,6 +334,11 @@ app.get("/images/:id", async (req, res) => {
   res.send(Buffer.from(image.data.buffer));
 });
 
-app.listen(port, () => {
-  console.log(`HateyHat server is running on port ${port}`);
-});
+// for local computer only (Vercel runs the exported app)
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`HateyHat server is running on port ${port}`);
+  });
+}
+
+export default app;
